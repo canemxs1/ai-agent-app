@@ -1,0 +1,181 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Attach to Chrome",
+            "port": 9222,
+            "request": "attach",
+            "type": "chrome",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+  "id": "unique-agent-id",
+  "ChatGPT": "Agent Name",
+  "description": "Brief description of the agent",
+  "category": "e.g., Customer Support, Data Analysis",
+  "input_requirements": ["List of required inputs"],
+  "output": "Expected output format",
+  "configuration": {
+    "model": "e.g., GPT-4",
+    "parameters": {
+      "temperature": 0.7,
+      "max_tokens": 150
+    }
+  },
+  "created_by": "User ID or System",
+  "created_at": "Timestamp"
+}
+ai-agent-app/
+├── backend/
+│   ├── app.py
+│   ├── models.py
+│   ├── database.db
+│   └── requirements.txt
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── App.js
+│   │   └── index.js
+│   └── package.json
+├── README.md
+└── .gitignore
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+class Agent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    input_requirements = db.Column(db.Text, nullable=False)
+    output = db.Column(db.Text, nullable=False)
+    configuration = db.Column(db.Text, nullable=False)
+    created_by = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+from flask import Flask, request, jsonify
+from models import db, Agent
+from datetime import datetime
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+db.init_app(app)
+
+@app.route('/agents', methods=['GET'])
+def get_agents():
+    agents = Agent.query.all()
+    return jsonify([{
+        'id': agent.id,
+        'name': agent.name,
+        'description': agent.description,
+        'category': agent.category,
+        'input_requirements': agent.input_requirements,
+        'output': agent.output,
+        'configuration': agent.configuration,
+        'created_by': agent.created_by,
+        'created_at': agent.created_at
+    } for agent in agents])
+
+@app.route('/agents', methods=['POST'])
+def add_agent():
+    data = request.get_json()
+    new_agent = Agent(
+        name=data['name'],
+        description=data['description'],
+        category=data['category'],
+        input_requirements=data['input_requirements'],
+        output=data['output'],
+        configuration=data['configuration'],
+        created_by=data['created_by'],
+        created_at=datetime.utcnow()
+    )
+    db.session.add(new_agent)
+    db.session.commit()
+    return jsonify({'message': 'Agent added successfully'}), 201
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const AgentList = () => {
+  const [agents, setAgents] = useState([]);
+
+  useEffect(() => {
+    axios.get('/agents')
+      .then(response => setAgents(response.data))
+      .catch(error => console.error(error));
+  }, []);
+
+  return (
+    <div>
+      <h2>AI Agents</h2>
+      <ul>
+        {agents.map(agent => (
+          <li key={agent.id}>{agent.name} - {agent.description}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default AgentList;
+import React from 'react';
+import AgentList from './components/AgentList';
+import AgentForm from './components/AgentForm';
+
+function App() {
+  return (
+    <div className="App">
+      <h1>AI Agent Application</h1>
+      <AgentForm />
+      <AgentList />
+    </div>
+  );
+}
+
+export default App;
+name: Deploy to Heroku
+
+on:
+  push:
+    branches:
+      - main  # or 'master' if that's your default branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.14.15
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+
+
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}"
+        }
+    ]
+}
